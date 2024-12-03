@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+
 # Consolidation des fichiers CSV en une base unique
 
 # Chemins des fichiers
@@ -43,4 +45,51 @@ def search_inventory(dataframe, criteria):
 criteria_example = {"Catégorie": "Électronique"}
 search_results = search_inventory(df_consolidated, criteria_example)
 print(search_results)
+
+
+# Génération de rapports
+def generate_report(dataframe, output_path):
+    """
+    Génère un rapport récapitulatif de l'inventaire et l'exporte en CSV et en graphique.
+    
+    Args:
+        dataframe (pd.DataFrame): La base consolidée.
+        output_path (str): Chemin de sortie pour les fichiers générés.
+        
+    Returns:
+        str: Message de confirmation.
+    """
+    # Calcul des statistiques globales
+    total_value = (dataframe["Quantité"] * dataframe["Prix Unitaire (€)"]).sum()
+    total_products = dataframe["Quantité"].sum()
+    category_summary = dataframe.groupby("Catégorie").agg(
+        Total_Produits=("Quantité", "sum"),
+        Valeur_Totale=("Prix Unitaire (€)", lambda x: (x * dataframe["Quantité"]).sum())
+    )
+
+    # Sauvegarde du rapport en CSV
+    report_csv_path = output_path + "rapport_inventaire.csv"
+    category_summary.to_csv(report_csv_path)
+
+    # Création d'un graphique des stocks par catégorie
+    plt.figure(figsize=(8, 6))
+    category_summary["Total_Produits"].plot(kind="bar", color="skyblue", edgecolor="black")
+    plt.title("Nombre de produits par catégorie", fontsize=14)
+    plt.ylabel("Nombre total de produits")
+    plt.xlabel("Catégorie")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Sauvegarde du graphique
+    graph_path = output_path + "graphique_inventaire.png"
+    plt.savefig(graph_path)
+    plt.close()
+
+    return f"Rapport généré avec succès ! CSV : {report_csv_path}, Graphique : {graph_path}"
+
+
+# Génération du rapport
+output_path = ""
+report_message = generate_report(df_consolidated, output_path)
+print(report_message)
 
