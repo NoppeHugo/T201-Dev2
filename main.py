@@ -1,95 +1,66 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+import os
+from src.importer import importer_csv
+from src.rechercher import rechercher_produit
+from src.rapport import generer_statistiques, generer_graphique
 
-# Consolidation des fichiers CSV en une base unique
+def afficher_menu():
+    print("""
+    ===== Menu Gestion d'Inventaire =====
+    1. Importer et fusionner les fichiers CSV
+    2. Rechercher un produit
+    3. Générer un rapport
+    4. Quitter
+    """)
 
-# Chemins des fichiers
-files = ["electronique.csv", "alimentation.csv", "vetements.csv"]
-base_path = ""
+def main():
+    df = None
 
-# Lecture et fusion des fichiers
-dataframes = [pd.read_csv(base_path + file) for file in files]
-df_consolidated = pd.concat(dataframes, ignore_index=True)
+    while True:
+        afficher_menu()
+        choix = input("Entrez votre choix : ")
 
-# Sauvegarde de la base consolidée
-consolidated_file = base_path + "base_consolidee.csv"
-df_consolidated.to_csv(consolidated_file, index=False)
+        if choix == "1":
+            dossier = "./data"
+            if os.path.exists(dossier):
+                df = importer_csv(dossier)
+                print("Fichiers importés et fusionnés avec succès !")
+            else:
+                print("Le dossier spécifié n'existe pas.")
 
-df_consolidated
+        elif choix == "2":
+            if df is not None:
+                nom = input("Rechercher par nom (laisser vide pour ignorer) : ")
+                categorie = input("Rechercher par catégorie (laisser vide pour ignorer) : ")
+                prix_min = input("Prix minimum (laisser vide pour ignorer) : ")
+                prix_max = input("Prix maximum (laisser vide pour ignorer) : ")
 
-# Ajout de fonctionnalités de recherche rapide
-# Fonction pour rechercher des produits par différents critères
+                prix_min = float(prix_min) if prix_min else None
+                prix_max = float(prix_max) if prix_max else None
 
-def search_inventory(dataframe, criteria):
-    """
-    Recherche dans l'inventaire selon des critères donnés.
-    
-    Args:
-        dataframe (pd.DataFrame): La base consolidée.
-        criteria (dict): Dictionnaire contenant les filtres (colonne et valeur).
-        
-    Returns:
-        pd.DataFrame: Résultats filtrés.
-    """
-    filtered_df = dataframe
-    for column, value in criteria.items():
-        if column in dataframe.columns:
-            if isinstance(value, (int, float)):
-                filtered_df = filtered_df[filtered_df[column] == value]
-            elif isinstance(value, str):
-                filtered_df = filtered_df[dataframe[column].str.contains(value, case=False)]
-    return filtered_df
+                resultats = rechercher_produit(df, nom, categorie, prix_min, prix_max)
+                print("Résultats de la recherche :")
+                print(resultats)
+            else:
+                print("Veuillez d'abord importer les fichiers CSV.")
 
+        elif choix == "3":
+            if df is not None:
+                stats = generer_statistiques(df)
+                print("Statistiques globales :")
+                for k, v in stats.items():
+                    print(f"{k}: {v}")
+                chemin_graphique = input("Entrez le chemin pour sauvegarder le graphique (ex: graphique.png) : ")
+                generer_graphique(df, chemin_graphique)
+                print(f"Graphique sauvegardé sous {chemin_graphique}.")
+            else:
+                print("Veuillez d'abord importer les fichiers CSV.")
 
-# Exemple d'utilisation : rechercher tous les produits de la catégorie "Électronique"
-criteria_example = {"Catégorie": "Électronique"}
-search_results = search_inventory(df_consolidated, criteria_example)
-print(search_results)
+        elif choix == "4":
+            print("Merci d'avoir utilisé la gestion d'inventaire. À bientôt !")
+            break
 
+        else:
+            print("Choix invalide. Veuillez réessayer.")
 
-# Génération de rapports
-def generate_report(dataframe, output_path):
-    """
-    Génère un rapport récapitulatif de l'inventaire et l'exporte en CSV et en graphique.
-    
-    Args:
-        dataframe (pd.DataFrame): La base consolidée.
-        output_path (str): Chemin de sortie pour les fichiers générés.
-        
-    Returns:
-        str: Message de confirmation.
-    """
-    # Calcul des statistiques globales
-    total_value = (dataframe["Quantité"] * dataframe["Prix Unitaire (€)"]).sum()
-    total_products = dataframe["Quantité"].sum()
-    category_summary = dataframe.groupby("Catégorie").agg(
-        Total_Produits=("Quantité", "sum"),
-        Valeur_Totale=("Prix Unitaire (€)", lambda x: (x * dataframe["Quantité"]).sum())
-    )
-
-    # Sauvegarde du rapport en CSV
-    report_csv_path = output_path + "rapport_inventaire.csv"
-    category_summary.to_csv(report_csv_path)
-
-    # Création d'un graphique des stocks par catégorie
-    plt.figure(figsize=(8, 6))
-    category_summary["Total_Produits"].plot(kind="bar", color="skyblue", edgecolor="black")
-    plt.title("Nombre de produits par catégorie", fontsize=14)
-    plt.ylabel("Nombre total de produits")
-    plt.xlabel("Catégorie")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    # Sauvegarde du graphique
-    graph_path = output_path + "graphique_inventaire.png"
-    plt.savefig(graph_path)
-    plt.close()
-
-    return f"Rapport généré avec succès ! CSV : {report_csv_path}, Graphique : {graph_path}"
-
-
-# Génération du rapport
-output_path = ""
-report_message = generate_report(df_consolidated, output_path)
-print(report_message)
-
+if __name__ == "__main__":
+    main()
