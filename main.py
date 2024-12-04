@@ -1,7 +1,5 @@
 import os
-from src.importer import importer_csv
-from src.rechercher import rechercher_produit
-from src.rapport import generer_statistiques, generer_graphique
+import pandas as pd
 
 def afficher_menu():
     print("""
@@ -11,6 +9,12 @@ def afficher_menu():
     3. Générer un rapport
     4. Quitter
     """)
+
+def importer_csv(dossier):
+    all_files = [os.path.join(dossier, f) for f in os.listdir(dossier) if f.endswith('.csv')]
+    df_list = [pd.read_csv(file) for file in all_files]
+    df = pd.concat(df_list, ignore_index=True)
+    return df
 
 def main():
     df = None
@@ -24,43 +28,45 @@ def main():
             if os.path.exists(dossier):
                 df = importer_csv(dossier)
                 print("Fichiers importés et fusionnés avec succès !")
+                print("Colonnes du DataFrame:", df.columns)  # Debug print to check columns
             else:
                 print("Le dossier spécifié n'existe pas.")
-
         elif choix == "2":
             if df is not None:
-                nom = input("Rechercher par nom (laisser vide pour ignorer) : ")
-                categorie = input("Rechercher par catégorie (laisser vide pour ignorer) : ")
-                prix_min = input("Prix minimum (laisser vide pour ignorer) : ")
-                prix_max = input("Prix maximum (laisser vide pour ignorer) : ")
-
-                prix_min = float(prix_min) if prix_min else None
-                prix_max = float(prix_max) if prix_max else None
-
+                nom = input("Entrez le nom du produit : ")
+                categorie = input("Entrez la catégorie du produit : ")
+                prix_min = float(input("Entrez le prix minimum : "))
+                prix_max = float(input("Entrez le prix maximum : "))
                 resultats = rechercher_produit(df, nom, categorie, prix_min, prix_max)
-                print("Résultats de la recherche :")
                 print(resultats)
             else:
                 print("Veuillez d'abord importer les fichiers CSV.")
-
         elif choix == "3":
             if df is not None:
                 stats = generer_statistiques(df)
-                print("Statistiques globales :")
-                for k, v in stats.items():
-                    print(f"{k}: {v}")
-                chemin_graphique = input("Entrez le chemin pour sauvegarder le graphique (ex: graphique.png) : ")
-                generer_graphique(df, chemin_graphique)
-                print(f"Graphique sauvegardé sous {chemin_graphique}.")
+                print(stats)
             else:
                 print("Veuillez d'abord importer les fichiers CSV.")
-
         elif choix == "4":
-            print("Merci d'avoir utilisé la gestion d'inventaire. À bientôt !")
             break
-
         else:
-            print("Choix invalide. Veuillez réessayer.")
+            print("Choix invalide, veuillez réessayer.")
+
+def rechercher_produit(df, nom, categorie, prix_min, prix_max):
+    filtre = pd.Series([True] * len(df))
+    if nom:
+        filtre &= df['Nom'].str.contains(nom, case=False, na=False)
+    if categorie:
+        filtre &= df['Catégorie'].str.contains(categorie, case=False, na=False)
+    if prix_min is not None:
+        filtre &= df['Prix Unitaire (€)'] >= prix_min
+    if prix_max is not None:
+        filtre &= df['Prix Unitaire (€)'] <= prix_max
+    return df[filtre]
+
+def generer_statistiques(df):
+    valeur_totale = (df['Quantité'] * df['Prix Unitaire (€)']).sum()
+    return f"Valeur totale de l'inventaire: {valeur_totale} €"
 
 if __name__ == "__main__":
     main()
