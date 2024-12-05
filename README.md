@@ -11,7 +11,7 @@ Ce projet propose une solution en ligne de commande pour gérer un inventaire à
 ## Installation
 1. Clonez le dépôt :
    ```bash
-   git clone <votre-lien-depot>
+   git clone https://github.com/NoppeHugo/T201-Dev2.git
 
 2. Installer les dépendances pandas et matplotlib: 
 pip install pandas matplotlib
