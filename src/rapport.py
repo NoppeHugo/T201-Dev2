@@ -1,6 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from pandas import ExcelWriter
 import os
 from fpdf import FPDF
 

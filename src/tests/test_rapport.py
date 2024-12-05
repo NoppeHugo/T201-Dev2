@@ -6,7 +6,7 @@ class TestRapport(unittest.TestCase):
     def setUp(self):
         data = {'Nom': ['Pomme', 'Pain'],
                 'Quantité': [50, 30],
-                'Prix': [0.5, 1.2],
+                'Prix Unitaire (€)': [0.5, 1.2],  # Modifier pour correspondre à la colonne utilisée dans la fonction
                 'Catégorie': ['Fruit', 'Boulangerie']}
         self.df = pd.DataFrame(data)
 

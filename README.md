@@ -14,7 +14,7 @@ Ce projet propose une solution en ligne de commande pour gérer un inventaire à
    git clone <votre-lien-depot>
 
 2. Installer les dépendances pandas et matplotlib: 
-pip install pandas matplotlib
+pip install pandas matplotlib FPDF
 
 3. Lancer le programme :
 python main.py
