@@ -14,9 +14,11 @@ def generer_graphique(df: pd.DataFrame, chemin: str) -> None:
         raise ValueError("Le chemin de l'image doit avoir une extension valide (.png, .jpg, .jpeg)")
     
     stats = df.groupby('Catégorie')['Quantité'].sum()
+    plt.figure(figsize=(10, 6))
     stats.plot(kind='bar', title='Quantité par Catégorie')
     plt.xlabel('Catégorie')
     plt.ylabel('Quantité')
+    plt.tight_layout()  # Ajuste les marges pour que les légendes soient visibles
     plt.savefig(chemin)
     plt.close()
 
@@ -27,26 +29,35 @@ def generer_rapport_pdf(df: pd.DataFrame, chemin_pdf: str, chemin_graphique: str
     pdf = FPDF()
     pdf.add_page()
     
-    # Utilisation de la police Arial avec encodage UTF-8
-    pdf.set_font("Arial", size=12)
+    # Ajout de la police DejaVuSans avec encodage UTF-8
+    pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+    pdf.set_font('DejaVu', '', 12)
     
     # Titre
     pdf.cell(200, 10, txt="Rapport d'Inventaire", ln=True, align='C')
+    pdf.ln(10)  # Ajouter un espace après le titre
     
-    # Statistiques
+    # Section Statistiques
+    pdf.set_font('DejaVu', '', 12)
+    pdf.cell(200, 10, txt="Statistiques", ln=True)
+    pdf.set_font('DejaVu', '', 10)
     stats = generer_statistiques(df)
-    pdf.set_font("Arial", size=10)
     for k, v in stats.items():
-        pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
+        pdf.cell(200, 10, txt=f"{k}: {v}", ln=True, border=1)
+    pdf.ln(10)  # Ajouter un espace après les statistiques
     
-    # Détails des articles
-    pdf.set_font("Arial", size=8)
+    # Section Détails des articles
+    pdf.set_font('DejaVu', '', 12)
+    pdf.cell(200, 10, txt="Détails des articles", ln=True)
+    pdf.set_font('DejaVu', '', 8)
     for index, row in df.iterrows():
-        pdf.cell(200, 10, txt=f"Article: {row['Nom']} | Catégorie: {row['Catégorie']} | Quantité: {row['Quantité']} | Prix Unitaire (€): {row['Prix Unitaire (€)']}", ln=True)
+        pdf.cell(200, 10, txt=f"Article: {row['Nom']} | Catégorie: {row['Catégorie']} | Quantité: {row['Quantité']} | Prix Unitaire (€): {row['Prix Unitaire (€)']}", ln=True, border=1)
+    pdf.ln(10)  # Ajouter un espace après les détails des articles
     
-    # Graphique
-    pdf.add_page()
-    pdf.image(chemin_graphique, x=10, y=10, w=190)
+    # Section Graphique
+    pdf.set_font('DejaVu', '', 12)
+    pdf.cell(200, 10, txt="Graphique", ln=True)
+    pdf.image(chemin_graphique, x=10, y=pdf.get_y() + 10, w=190)
     
     # Sauvegarde du PDF
     pdf.output(chemin_pdf)
