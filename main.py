@@ -1,5 +1,8 @@
 import os
 import pandas as pd
+from src.rapport import generer_statistiques, generer_graphique, generer_rapport_pdf, ajouter_extension_si_absente
+from src.rechercher import rechercher_produit
+from src.importer import importer_csv
 
 def afficher_menu():
     print("""
@@ -9,12 +12,6 @@ def afficher_menu():
     3. Générer un rapport
     4. Quitter
     """)
-
-def importer_csv(dossier):
-    all_files = [os.path.join(dossier, f) for f in os.listdir(dossier) if f.endswith('.csv')]
-    df_list = [pd.read_csv(file) for file in all_files]
-    df = pd.concat(df_list, ignore_index=True)
-    return df
 
 def main():
     df = None
@@ -35,38 +32,38 @@ def main():
             if df is not None:
                 nom = input("Entrez le nom du produit : ")
                 categorie = input("Entrez la catégorie du produit : ")
-                prix_min = float(input("Entrez le prix minimum : "))
-                prix_max = float(input("Entrez le prix maximum : "))
+                prix_min_input = input("Entrez le prix minimum : ")
+                prix_min = float(prix_min_input) if prix_min_input else None
+                
+                prix_max_input = input("Entrez le prix maximum : ")
+                prix_max = float(prix_max_input) if prix_max_input else None
                 resultats = rechercher_produit(df, nom, categorie, prix_min, prix_max)
                 print(resultats)
             else:
                 print("Veuillez d'abord importer les fichiers CSV.")
         elif choix == "3":
             if df is not None:
-                stats = generer_statistiques(df)
-                print(stats)
+                chemin_graphique = input("Entrez le nom du fichier pour sauvegarder le graphique (sans extension) : ")
+                chemin_graphique = ajouter_extension_si_absente(chemin_graphique, ".png")
+                try:
+                    generer_graphique(df, chemin_graphique)
+                except ValueError as e:
+                    print(e)
+                    continue
+                
+                chemin_pdf = input("Entrez le nom du fichier pour sauvegarder le rapport PDF (sans extension) : ")
+                chemin_pdf = ajouter_extension_si_absente(chemin_pdf, ".pdf")
+                try:
+                    generer_rapport_pdf(df, chemin_pdf, chemin_graphique)
+                    print(f"Rapport PDF généré : {os.path.abspath(chemin_pdf)}")
+                except FileNotFoundError as e:
+                    print(e)
             else:
                 print("Veuillez d'abord importer les fichiers CSV.")
         elif choix == "4":
             break
         else:
             print("Choix invalide, veuillez réessayer.")
-
-def rechercher_produit(df, nom, categorie, prix_min, prix_max):
-    filtre = pd.Series([True] * len(df))
-    if nom:
-        filtre &= df['Nom'].str.contains(nom, case=False, na=False)
-    if categorie:
-        filtre &= df['Catégorie'].str.contains(categorie, case=False, na=False)
-    if prix_min is not None:
-        filtre &= df['Prix Unitaire (€)'] >= prix_min
-    if prix_max is not None:
-        filtre &= df['Prix Unitaire (€)'] <= prix_max
-    return df[filtre]
-
-def generer_statistiques(df):
-    valeur_totale = (df['Quantité'] * df['Prix Unitaire (€)']).sum()
-    return f"Valeur totale de l'inventaire: {valeur_totale} €"
 
 if __name__ == "__main__":
     main()
