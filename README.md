@@ -22,3 +22,15 @@ python main.py
 4. Executez les tests unitaires avec :
 python -m unittest discover src/tests
 
+
+##Commandes exemple argparse:
+
+python mainArgparse.py --importer <chemin_du_dossier>
+python mainArgparse.py --importer ./data
+
+python mainArgparse.py --rechercher <nom> <categorie> <prix_min> <prix_max>
+python mainArgparse.py --rechercher "nom_produit" "categorie" 10 50
+
+python mainArgparse.py --rapport <chemin_graphique> <chemin_pdf>
+python mainArgparse.py --rapport "graphique" "rapport"
+
